@@ -8,7 +8,38 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 
 ## Mandatory tracer-bullet workflow
 
-**DEFAULT ACTION: implement Tracer Bullet 1 (TB1) ONLY, then STOP for human review.** Do not proceed to TB2, TB3, or TB4 unless the user explicitly approves that next bullet. If asked to implement "the MVP" without naming a bullet, start with TB1 and stop after its gate. A previous approval does not imply approval of subsequent bullets.
+**Implement only the currently approved tracer bullet. After completing it, run tests, report the results, and stop for human review before starting the next tracer bullet.** Approval of one bullet does not authorize the next. If no coding bullet is explicitly approved, clarify scope before implementing.
+
+### Current Project Status
+
+- TB1: Implemented; implementation checkpoint committed, handoff being finalized.
+- TB2: Specification preparation approved; see `docs/TB2_SPEC.md`.
+- TB2 coding: Not yet approved.
+- TB3 and later: Not approved.
+
+### Development Workflow
+
+1. Read the current tracer-bullet specification and `docs/TB1_HANDOFF.md` for context.
+2. Inspect the existing implementation.
+3. Run baseline tests.
+4. Propose a minimal implementation plan.
+5. Wait for approval before making substantial changes.
+6. Implement one small end-to-end working slice within the approved bullet.
+7. Run focused tests and regression tests.
+8. Report results and limitations.
+9. Stop for human review.
+
+### Important Rules
+
+- Prefer working vertical slices over independent architectural layers.
+- Preserve the lightweight Streamlit + Python architecture and use uv.
+- Never invent citations or numerical results.
+- Keep LLM classification separate from Pandas computations.
+- Do not introduce infrastructure unnecessary for the current tracer bullet.
+- Do not implement future functionality merely because it appears in the PRD.
+- Older TB1 bootstrap prompts in the technical design describe project history; current approval status and the current tracer-bullet specification govern new work.
+
+### Validation requirements
 
 1. Make the **smallest change that crosses the whole user-visible workflow**: question input → real GitHub retrieval → LLM classification → Pandas computation → Streamlit display with source links.
 2. Write one synthetic-fixture **end-to-end test for the same `run_research` path the UI calls**. Mock the GitHub and LLM boundaries; do not invent a separate demonstration pipeline.
@@ -16,7 +47,7 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 4. Show the actual observed result or honestly state what could not be verified. Do not represent fixture results as live research.
 5. **Stop and ask for feedback.** Only after explicit approval implement the next tracer bullet. Keep each change small and independently demonstrable.
 
-### TB1 — Smallest real research result (implement first)
+### TB1 — Smallest real research result (implemented checkpoint)
 
 - Initialize a `uv` project and minimal Streamlit input for a question and `owner/repo` (default `langchain-ai/langchain`).
 - Fetch **up to 10 genuine public GitHub issues** using a bounded repository/date query; exclude pull requests.
@@ -30,7 +61,7 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 ### TB2 — Historical trends and sampling
 
 - Extend the same running app to a six-month time window and month-stratified *baseline* issue collection (up to 50 issues).
-- Add monthly sentiment counts, denominators, a simple Plotly trend chart, and sparse-month/incomplete-coverage warnings.
+- Follow `docs/TB2_SPEC.md`: monthly sentiment counts and denominators, a simple trend chart, then complaint-theme trends and sparse-month/incomplete-coverage warnings. Coding requires explicit approval.
 - Add exact arithmetic and date-bucketing tests. Preserve the working TB1 path.
 
 **TB2 review gate:** Show end-to-end time series and computed month-level Ns, run tests/lint, report actual coverage and limitations, then **STOP**.
