@@ -26,6 +26,30 @@ with non-unclear sentiment. Counts, exclusions, coverage, original links and bia
 warnings are visible. Missing credentials/model errors leave retrieved issues
 unclassified with an explicit warning. Source failures display a safe error.
 
+Complaint prevalence counts each theme once per relevant classified issue. Its
+denominator includes issues with no complaint themes and unclear sentiment;
+multiple themes can make percentages sum above 100%. Counts, denominators,
+percentages and a prevalence bar chart reuse the existing classification batch.
+The question guides classification only, not retrieval: narrow questions may
+have little relevant evidence in this small repository-level sample.
+
+The dashboard includes deterministic Research Findings, coverage cards, sorted
+horizontal complaint bars, and an evidence explorer with issue links, titles,
+sentiment, themes, relevance and creation dates. Sentiment/theme filters use
+session data only and do not rerun research. Full metric tables and detailed
+counts remain available in expanders; sampling caveats are notes at the bottom.
+Synthetic classification cases verify mapping and arithmetic, not model accuracy;
+review the labels against the original linked issues to assess classification quality.
+
+The classifier defines each complaint theme independently: bugs alone do not imply
+debugging or usability difficulties, and provider names alone do not imply an
+integration complaint. Sentiment reflects substantive content, including adverse
+functional defects, rather than issue templates or feature-request wording.
+The Evidence Explorer's description expander reuses the retained body (up to
+5,500 characters) and original link without fetching or classifying again.
+The eight synthetic policy examples exercise schema, prompt wiring and arithmetic;
+they do not assert deterministic live-model labels or constitute an accuracy benchmark.
+
 Results exist only in active session memory; refresh/disconnect may lose them.
 There is no source-text logging, persistent cache or report saving. `store=False`
 is used for the model response; this does not promise zero provider-side retention.
