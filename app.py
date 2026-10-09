@@ -1,4 +1,4 @@
-"""Local TB1/TB2 dashboard; no persistent source cache or report files."""
+"""Local TB1/TB2/TB3-A dashboard; no persistent source cache or report files."""
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -18,8 +18,8 @@ from research import (
 
 load_dotenv()
 st.set_page_config(page_title="Community Research Analyst", layout="wide")
-st.title("Community Research Analyst — TB2")
-st.caption("Historical: up to 50 issues, 12 searches, five classification batches; in-memory results.")
+st.title("Community Research Analyst — TB3-A")
+st.caption("Historical: up to 50 issues, 12 searches, five classification batches; optional investigation adds at most one search and two model calls. In-memory results.")
 historical = st.radio("Sampling", ["Historical (TB2)", "Recent (TB1)"], horizontal=True) == "Historical (TB2)"
 st.info(
     ("Retrieval scope: up to 50 public issues across calendar months. " if historical else
@@ -39,12 +39,14 @@ with st.form("research"):
     repo = st.text_input("Repository", "langchain-ai/langchain")
     start = st.date_input("From", default_start, key=f"start_{historical}")
     end = st.date_input("Through", default_end, key=f"end_{historical}")
+    investigate = st.checkbox("Additional investigation", value=False,
+        help="Evaluate baseline evidence and optionally search once for supporting issues. Baseline percentages stay unchanged.")
     submitted = st.form_submit_button("Research")
 if submitted:
     st.session_state.pop("active_result", None)
     try:
         with st.status("Research running", expanded=True) as status:
-            result = run_research(question, repo.strip(), start, end, progress=st.write, historical=historical)
+            result = run_research(question, repo.strip(), start, end, progress=st.write, historical=historical, investigate=investigate)
             st.session_state.active_result = (repo.strip(), start, end, result)
             status.update(label="Research finished — inspect coverage and warnings", state="complete")
     except ResearchError as exc:
@@ -231,6 +233,23 @@ if "active_result" in st.session_state:
                 "Descriptions are capped at 5,500 characters; use the original link for the full issue."
             )
             st.text(selected_issue.body or "No description was provided.")
+    investigation = getattr(result, "investigation", None)
+    if investigation is not None and investigation.status != "disabled":
+        st.subheader("Additional Investigation")
+        st.write(f"Decision: {investigation.status.replace('_', ' ')} — {investigation.reason}")
+        st.caption("Targeted issues are qualitative supporting evidence. They do not affect baseline counts, sentiment, prevalence, or historical charts.")
+        if investigation.decision and investigation.decision.theme:
+            st.write(f"Selected theme: {investigation.decision.theme.replace('_', ' ')}")
+        if investigation.batch is not None:
+            st.write(f"Accepted targeted candidates: {len(investigation.batch.items)}; baseline duplicates: {investigation.duplicates}; confirmed new supporting issues: {len(investigation.supporting)}.")
+        for issue in investigation.supporting:
+            st.link_button(f"Supporting GitHub issue #{issue.number}", issue.url)
+            st.text(issue.title)
+        for limitation in investigation.limitations:
+            st.warning(limitation)
+        with st.expander("Investigation scope and execution"):
+            st.write({"query": investigation.query, "targeted_requests": investigation.github_requests,
+                      "total_model_calls": investigation.model_calls})
     st.subheader("Notes")
     for warning in result.warnings:
         if warning in sampling_notes:

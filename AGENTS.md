@@ -15,7 +15,9 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 - TB1: Implemented and checkpointed on main; see `docs/TB1_HANDOFF.md`.
 - TB2: First historical sentiment slice implemented and verification approved; see `docs/TB2_SPEC.md` and `docs/TB2_HANDOFF.md`.
 - TB2 monthly complaint-theme trends: Not approved.
-- TB3 and later: Not approved.
+- TB3-A: Implemented; verification and checkpoint approved; see `docs/TB3A_HANDOFF.md`.
+- TB3-B: Planning approved; coding not approved.
+- TB4 and later: Not approved.
 
 ### Development Workflow
 
@@ -69,8 +71,8 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 
 ### TB3 — Quick/Deep and bounded adaptive retrieval
 
-- Introduce Quick (up to 50 baseline issues, 1 round) and Deep (up to 120 baseline + 30 targeted, 2 rounds) modes.
-- Add simple bounded planning/gap evaluation, call/time budgets and one optional targeted search for supporting evidence.
+- Introduce Quick (up to 50 baseline issues, 1 round) and Deep (up to 50 baseline + 10 targeted, at most one additional round) modes.
+- Reuse TB3-A bounded gap evaluation, call/time budgets and one optional targeted search for supporting evidence. Preserve the smaller 10-issue Recent baseline.
 - Keep targeted supporting items **out of baseline sentiment and trend denominators**. Reuse classification results in memory within a run.
 
 **TB3 review gate:** Demonstrate distinct modes, enforce hard item/API/model bounds, prove targeted data does not contaminate baseline trends, then **STOP**.

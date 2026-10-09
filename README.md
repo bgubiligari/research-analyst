@@ -1,8 +1,9 @@
-# Community Research Analyst — TB1 and TB2
+# Community Research Analyst — TB1, TB2 and TB3-A
 
 Local synchronous Streamlit research using public GitHub Issues, typed OpenAI
 classification, and deterministic Pandas sentiment counts and historical trends.
-No saved reports, Deep mode, or synthetic live data.
+Optional supporting investigation stays separate from baseline statistics.
+No saved reports, Quick/Deep mode selector, or synthetic live data.
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then:
 
@@ -87,3 +88,26 @@ percentages are N/A. Sentiment N excludes irrelevant, uncertain and unclear
 labels. N < 5 points are suppressed; chart lines never cross these gaps.
 Monthly complaint trends remain deferred. All source text and labels stay in
 memory; no new persistence or model-generated narrative is introduced.
+
+
+## TB3-A — Optional additional investigation
+
+Check **Additional investigation** before running research. Python checks relevant
+baseline evidence, supported themes and remaining budgets. One strict structured
+model decision can accept existing evidence or request one known complaint theme.
+Python constructs the complete repository/public-issue/date query using a fixed
+keyword mapping; model output cannot supply queries, URLs or budgets.
+
+Historical baseline remains capped at 50 issues, 12 searches and five batches.
+The optional path allows one extra search (10 candidates), one evidence-gap call
+and one new-issue classification batch: at most 13 GitHub requests and seven model
+calls. Recent mode retains its 10-issue baseline. No retries, pagination or refill.
+Requests share header-aware rate-limit state and a 180-second retrieval deadline;
+total execution deadlines are 360 seconds without investigation and 450 seconds
+with it, checked before calls with bounded per-call timeouts.
+
+Duplicate issues retain their baseline classifications. Only newly retrieved,
+validated, relevant issues labeled with the selected theme appear as supporting
+links. Targeted evidence never enters baseline metrics, monthly coverage or charts.
+The Additional Investigation section reports decisions, counts and limitations.
+See [TB3-A handoff](docs/TB3A_HANDOFF.md) for verification and limitations.
