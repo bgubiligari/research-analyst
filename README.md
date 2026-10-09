@@ -1,8 +1,8 @@
-# Community Research Analyst — Tracer Bullet 1
+# Community Research Analyst — TB1 and TB2
 
 Local synchronous Streamlit research using public GitHub Issues, typed OpenAI
-classification, and deterministic Pandas sentiment counts. No saved reports,
-trends, Deep mode, or synthetic live data.
+classification, and deterministic Pandas sentiment counts and historical trends.
+No saved reports, Deep mode, or synthetic live data.
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then:
 
@@ -16,7 +16,8 @@ uv run ruff check .
 ```
 
 Open http://127.0.0.1:8501. Enter a question, owner/repo and dates; click Research.
-The default window is 30 days. One newest-first, unfiltered repository/date search
+Historical sampling defaults to six completed UTC months (see below). In Recent
+(TB1), the default window is 30 days. One newest-first, unfiltered repository/date search
 returns at most 10 candidates; PRs and invalid records are discarded without
 refilling. One structured model call (no retries, 30-second timeout) classifies
 bounded issue text (500 title + 5,500 body characters). GitHub timeout is 20 seconds.
@@ -54,8 +55,35 @@ Results exist only in active session memory; refresh/disconnect may lose them.
 There is no source-text logging, persistent cache or report saving. `store=False`
 is used for the model response; this does not promise zero provider-side retention.
 GitHub issues overrepresent problems; this tiny non-random sample cannot describe
-all developers or historical trends. Classification is model interpretation.
+all developers. Historical charts describe the sampled issues only. Classification
+is model interpretation.
 
 Offline evaluation runs synthetic fixtures through the same `run_research`
 function the UI calls; tests require no credentials and do not enable a fake-live
-mode in the app. TB2 is proposed only after explicit human review.
+mode in the app. The first TB2 slice has passed human verification review.
+
+## TB2 first slice (verification approved)
+
+Historical sampling is the default; Recent (TB1) preserves the 10-issue workflow.
+Historical dates default to the last six completed UTC calendar months. Custom
+ranges support up to six calendar buckets, with partial-month warnings.
+
+The 50-issue capacity is evenly allocated oldest-first (six months: 9, 9, 8, 8,
+8, 8). Each clipped interval is split into disjoint date halves: early ascending
+creation order, late descending; odd days and quotas go early. This deterministic
+selection favors monthly edges and is not representative or random. GitHub does
+not guarantee a tie-break for equal creation timestamps. No pagination, refill,
+redistribution or automatic retries occur.
+
+At most 12 sequential searches run within a 180-second retrieval budget. Rate
+headers pace requests; waits are bounded and reported. Budget exhaustion or
+403/429 preserves prior evidence and marks remaining intervals unattempted.
+Without a GitHub token, search rate limits can cause partial coverage. At most
+five batches of ten use the existing classifier; failures remain unclassified.
+
+Monthly counts and coverage separate reported matches, returned/rejected records,
+accepted issues and classifications. Unknown totals and zero-denominator
+percentages are N/A. Sentiment N excludes irrelevant, uncertain and unclear
+labels. N < 5 points are suppressed; chart lines never cross these gaps.
+Monthly complaint trends remain deferred. All source text and labels stay in
+memory; no new persistence or model-generated narrative is introduced.

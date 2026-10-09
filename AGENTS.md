@@ -12,9 +12,9 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 
 ### Current Project Status
 
-- TB1: Implemented; implementation checkpoint committed, handoff being finalized.
-- TB2: Specification preparation approved; see `docs/TB2_SPEC.md`.
-- TB2 coding: Not yet approved.
+- TB1: Implemented and checkpointed on main; see `docs/TB1_HANDOFF.md`.
+- TB2: First historical sentiment slice implemented and verification approved; see `docs/TB2_SPEC.md` and `docs/TB2_HANDOFF.md`.
+- TB2 monthly complaint-theme trends: Not approved.
 - TB3 and later: Not approved.
 
 ### Development Workflow
@@ -44,6 +44,7 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 1. Make the **smallest change that crosses the whole user-visible workflow**: question input → real GitHub retrieval → LLM classification → Pandas computation → Streamlit display with source links.
 2. Write one synthetic-fixture **end-to-end test for the same `run_research` path the UI calls**. Mock the GitHub and LLM boundaries; do not invent a separate demonstration pipeline.
 3. Run focused tests and lint; run the local application and a live smoke test if credentials and networking are available.
+   After every code change, open the local dashboard in a real browser and test the affected user workflow. Visually inspect rendered charts, tables, warnings, and layout; exercise affected controls and source links. Server health checks and Streamlit AppTest supplement this browser check but do not replace it. Report actual browser observations and any verification limitations before declaring the change complete.
 4. Show the actual observed result or honestly state what could not be verified. Do not represent fixture results as live research.
 5. **Stop and ask for feedback.** Only after explicit approval implement the next tracer bullet. Keep each change small and independently demonstrable.
 
