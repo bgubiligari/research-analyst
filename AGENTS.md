@@ -16,7 +16,7 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 - TB2: First historical sentiment slice implemented and verification approved; see `docs/TB2_SPEC.md` and `docs/TB2_HANDOFF.md`.
 - TB2 monthly complaint-theme trends: Not approved.
 - TB3-A: Implemented; verification and checkpoint approved; see `docs/TB3A_HANDOFF.md`.
-- TB3-B: Planning approved; coding not approved.
+- TB3-B: Implemented; verification approved and checkpoint authorized. See `docs/TB3B_HANDOFF.md`.
 - TB4 and later: Not approved.
 
 ### Development Workflow

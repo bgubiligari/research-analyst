@@ -233,7 +233,7 @@ def test_filters_do_not_rerun_pipeline():
         app.button[0].click().run()
         app.selectbox[0].select("negative").run()
         app.selectbox[1].select("usability").run()
-        app.selectbox[2].select(result.batch.items[2].source_id).run()
+        app.selectbox[3].select(result.batch.items[2].source_id).run()
         assert pipeline.call_count == 1
     assert not app.exception
     assert len(app.dataframe[2].value) == 1
@@ -263,3 +263,31 @@ def test_complaint_chart_preserves_pandas_values_and_full_percentage_axis(single
     assert all(layer["encoding"]["text"]["field"] == "label" for layer in spec["layer"][1:])
     if single_issue:
         assert data.percent.max() == 100
+
+
+@pytest.mark.parametrize('selection,expected', [
+    ('Relevant', [1, 5]), ('All', [1, 2, 3, 4, 5]),
+    ('Irrelevant', [2]), ('Uncertain', [3]),
+])
+def test_relevance_filter_only_changes_evidence(selection, expected):
+    labels = [label(1, 'negative'), label(2, 'negative', 'irrelevant'),
+              label(3, 'negative', 'uncertain'), label(5, 'neutral')]
+    result = run_research('Synthetic question', REPO, START, END,
+        fetch=fetcher([record(i) for i in range(1, 6)]), classify=lambda *args: labels)
+    metrics = result.sentiment.copy(), result.complaints.copy(), dict(result.counts), list(result.labels)
+    table = evidence_table(result, relevance=selection)
+    assert table.Issue.tolist() == [f'https://github.com/{REPO}/issues/{n}' for n in expected]
+    assert evidence_table(result, relevance='Relevant', sentiment='negative').Issue.tolist() == [
+        f'https://github.com/{REPO}/issues/1']
+    with patch('research.run_research', return_value=result) as pipeline:
+        app = AppTest.from_file('../app.py', default_timeout=15).run()
+        app.button[0].click().run()
+        relevance = next(box for box in app.selectbox if box.label == 'Filter by relevance')
+        assert relevance.value == 'Relevant'
+        assert app.dataframe[2].value.Issue.tolist() == [f'https://github.com/{REPO}/issues/{n}' for n in [1, 5]]
+        relevance.select(selection).run()
+        assert app.dataframe[2].value.Issue.tolist() == table.Issue.tolist()
+        assert pipeline.call_count == 1
+    assert not app.exception
+    assert result.sentiment.equals(metrics[0]) and result.complaints.equals(metrics[1])
+    assert result.counts == metrics[2] and result.labels == metrics[3]

@@ -1,9 +1,10 @@
-# Community Research Analyst — TB1, TB2 and TB3-A
+# Community Research Analyst — TB1, TB2 and TB3
 
 Local synchronous Streamlit research using public GitHub Issues, typed OpenAI
 classification, and deterministic Pandas sentiment counts and historical trends.
 Optional supporting investigation stays separate from baseline statistics.
-No saved reports, Quick/Deep mode selector, or synthetic live data.
+Quick and Deep research depth are independent of Recent/Historical sampling.
+No saved reports or synthetic live data.
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then:
 
@@ -92,7 +93,8 @@ memory; no new persistence or model-generated narrative is introduced.
 
 ## TB3-A — Optional additional investigation
 
-Check **Additional investigation** before running research. Python checks relevant
+Choose **Deep** research before running research. **Quick** is the default and
+performs baseline-only research, with no gap evaluation or targeted search. Python checks relevant
 baseline evidence, supported themes and remaining budgets. One strict structured
 model decision can accept existing evidence or request one known complaint theme.
 Python constructs the complete repository/public-issue/date query using a fixed
@@ -106,8 +108,21 @@ Requests share header-aware rate-limit state and a 180-second retrieval deadline
 total execution deadlines are 360 seconds without investigation and 450 seconds
 with it, checked before calls with bounded per-call timeouts.
 
+Recent Quick is capped at 10 baseline issues, one GitHub request and one model
+call; Recent Deep adds at most 10 candidates, for two requests and three model
+calls. Historical Quick uses 50/12/5 and Historical Deep uses 50+10/13/7. Limits
+are ceilings, not required usage. Changing sampling, depth or evidence filters
+makes no API calls; only Research submits a run. Completed reports show the
+executed configuration until replaced by another submitted run.
+
 Duplicate issues retain their baseline classifications. Only newly retrieved,
 validated, relevant issues labeled with the selected theme appear as supporting
 links. Targeted evidence never enters baseline metrics, monthly coverage or charts.
 The Additional Investigation section reports decisions, counts and limitations.
-See [TB3-A handoff](docs/TB3A_HANDOFF.md) for verification and limitations.
+See [TB3-A handoff](docs/TB3A_HANDOFF.md) and [TB3-B handoff](docs/TB3B_HANDOFF.md)
+for verification and limitations.
+
+Evidence Explorer defaults to **Relevant** issues. Its relevance selector offers
+Relevant, All, Irrelevant and Uncertain; All also includes unclassified issues.
+Relevance, sentiment and complaint-theme filters intersect in memory and affect
+only the evidence table. They never alter classifications, findings or charts.

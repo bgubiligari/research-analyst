@@ -325,12 +325,15 @@ def research_findings(result):
     return findings
 
 
-def evidence_table(result, *, sentiment="All", theme="All"):
+def evidence_table(result, *, sentiment="All", theme="All", relevance="All"):
     """Join by source_id, preserving retrieved URLs and filtering in memory."""
     labels = {label.source_id: label for label in result.labels}
     rows = []
     for issue in result.batch.items:
         label = labels.get(issue.source_id)
+        issue_relevance = label.relevance if label else "unclassified"
+        if relevance != "All" and issue_relevance != relevance.lower():
+            continue
         issue_sentiment = label.sentiment if label else "unclassified"
         themes = sorted(set(label.complaint_themes)) if label else []
         if sentiment != "All" and issue_sentiment != sentiment:
@@ -340,7 +343,7 @@ def evidence_table(result, *, sentiment="All", theme="All"):
         rows.append({
             "Issue": issue.url, "Title": issue.title, "Sentiment": issue_sentiment,
             "Complaint Themes": ", ".join(themes) if themes else ("none" if label else "unclassified"),
-            "Relevance": label.relevance if label else "unclassified",
+            "Relevance": issue_relevance,
             "Created At": issue.created_at.astimezone(UTC).date(),
         })
     return pd.DataFrame(rows, columns=[
@@ -620,7 +623,8 @@ def run_research(question, repo, start, end, *, fetch=search_issues,
     validate_scope(question, repo, start, end)
     deadline = monotonic() + (450 if investigate else 360)
     model_calls = 0
-    model_limit = 7 if investigate else 5
+    model_limit = (5 if historical else 1) + (2 if investigate else 0)
+    request_limit = (12 if historical else 1) + (1 if investigate else 0)
     investigation = Investigation()
 
     def remaining():
@@ -637,7 +641,7 @@ def run_research(question, repo, start, end, *, fetch=search_issues,
 
     def execute(owned):
         paced = RateAwareClient(owned, progress, monotonic=monotonic, wall=wall, sleep=sleep,
-                                max_requests=13 if investigate else 12)
+                                max_requests=request_limit)
         baseline_fetch = (lambda r, s, e: search_issues(r, s, e, client=paced)) if fetch is search_issues else fetch
         historical_adapter = historical_fetch or (
             lambda r, s, e, **kw: collect_historical(r, s, e, client=owned, paced=paced, **kw))
@@ -653,7 +657,7 @@ def run_research(question, repo, start, end, *, fetch=search_issues,
             investigation.reason = 'No usable relevant baseline evidence or supported complaint theme for evaluation.'
             return result
         if (remaining() <= 0 or model_calls + 2 > model_limit or paced.stopped
-                or paced.requests >= 13 or monotonic() >= paced.deadline):
+                or paced.requests >= request_limit or monotonic() >= paced.deadline):
             investigation.reason = 'Insufficient request, model-call, or execution-time budget for investigation.'
             return result
         progress('Evaluating evidence gap')

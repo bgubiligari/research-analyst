@@ -183,7 +183,7 @@ def test_dashboard_filtering_does_not_call_pipeline():
     result, _, _ = fixture(evaluate=lambda *args: decision())
     with patch('research.run_research', return_value=result) as pipeline:
         app = AppTest.from_file('../app.py', default_timeout=15).run()
-        app.checkbox[0].check().run()
+        app.radio[1].set_value("Deep").run()
         app.button[0].click().run()
         app.selectbox[0].select('negative').run()
         assert pipeline.call_count == 1

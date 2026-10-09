@@ -18,9 +18,15 @@ from research import (
 
 load_dotenv()
 st.set_page_config(page_title="Community Research Analyst", layout="wide")
-st.title("Community Research Analyst — TB3-A")
-st.caption("Historical: up to 50 issues, 12 searches, five classification batches; optional investigation adds at most one search and two model calls. In-memory results.")
+st.title("Community Research Analyst — TB3-B")
+st.caption("Local research with in-memory results. Choose sampling and research depth, then click Research.")
 historical = st.radio("Sampling", ["Historical (TB2)", "Recent (TB1)"], horizontal=True) == "Historical (TB2)"
+depth = st.radio("Research depth", ["Quick", "Deep"], horizontal=True)
+investigate = depth == "Deep"
+st.caption("Quick: baseline-only research. Deep: baseline research with optional additional investigation.")
+st.caption(f"Selected budgets: {50 if historical else 10} baseline issues; {10 if investigate else 0} additional candidates; "
+           f"{(12 if historical else 1) + int(investigate)} GitHub calls; "
+           f"{(5 if historical else 1) + 2 * int(investigate)} model calls maximum.")
 st.info(
     ("Retrieval scope: up to 50 public issues across calendar months. " if historical else
      "Retrieval scope: a small repository-level sample of the newest 10 public issues ") +
@@ -39,20 +45,26 @@ with st.form("research"):
     repo = st.text_input("Repository", "langchain-ai/langchain")
     start = st.date_input("From", default_start, key=f"start_{historical}")
     end = st.date_input("Through", default_end, key=f"end_{historical}")
-    investigate = st.checkbox("Additional investigation", value=False,
-        help="Evaluate baseline evidence and optionally search once for supporting issues. Baseline percentages stay unchanged.")
     submitted = st.form_submit_button("Research")
 if submitted:
     st.session_state.pop("active_result", None)
     try:
         with st.status("Research running", expanded=True) as status:
             result = run_research(question, repo.strip(), start, end, progress=st.write, historical=historical, investigate=investigate)
-            st.session_state.active_result = (repo.strip(), start, end, result)
+            st.session_state.active_result = (repo.strip(), start, end, result, "Historical" if historical else "Recent", depth)
             status.update(label="Research finished — inspect coverage and warnings", state="complete")
     except ResearchError as exc:
         st.error(str(exc))
 if "active_result" in st.session_state:
-    repo, start, end, result = st.session_state.active_result
+    active = st.session_state.active_result
+    repo, start, end, result = active[:4]
+    if len(active) == 6:
+        executed_sampling, executed_depth = active[4:]
+    else:  # Compatibility with a pre-TB3-B result still in the active session.
+        executed_sampling = "Historical" if not result.monthly.empty else "Recent"
+        previous = getattr(result, "investigation", None)
+        executed_depth = "Deep" if previous and previous.status != "disabled" else "Quick"
+    st.write(f"Executed research: {executed_sampling} {executed_depth}")
     st.write(f"Scope: {repo}, {start} through {end}; source: public GitHub Issues.")
     sampling_notes = {
         "Small exploratory sample of GitHub Issues; not overall developer sentiment.",
@@ -203,12 +215,16 @@ if "active_result" in st.session_state:
 
     st.subheader("Evidence Explorer")
     st.caption("Filters affect only this table; findings and charts retain the full retrieved sample.")
-    filters = st.columns(2)
+    filters = st.columns(3)
     sentiment_filter = filters[0].selectbox("Filter by sentiment",
         ["All", "positive", "negative", "neutral", "mixed", "unclear", "unclassified"])
     theme_filter = filters[1].selectbox("Filter by complaint theme",
         ["All"] + sorted({theme for label in result.labels for theme in label.complaint_themes}))
-    evidence = evidence_table(result, sentiment=sentiment_filter, theme=theme_filter)
+    relevance_filter = filters[2].selectbox("Filter by relevance",
+        ["Relevant", "All", "Irrelevant", "Uncertain"],
+        help="Relevant is the default. All also includes issues without a classification.")
+    evidence = evidence_table(result, sentiment=sentiment_filter, theme=theme_filter,
+                              relevance=relevance_filter)
     st.caption(f"Showing {len(evidence)} of {len(result.batch.items)} retrieved issues.")
     st.dataframe(evidence, hide_index=True, width="stretch", row_height=48,
         height=48 * max(len(evidence), 1) + 38,
@@ -234,7 +250,7 @@ if "active_result" in st.session_state:
             )
             st.text(selected_issue.body or "No description was provided.")
     investigation = getattr(result, "investigation", None)
-    if investigation is not None and investigation.status != "disabled":
+    if executed_depth == "Deep" and investigation is not None and investigation.status != "disabled":
         st.subheader("Additional Investigation")
         st.write(f"Decision: {investigation.status.replace('_', ' ')} — {investigation.reason}")
         st.caption("Targeted issues are qualitative supporting evidence. They do not affect baseline counts, sentiment, prevalence, or historical charts.")
