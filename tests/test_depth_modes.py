@@ -49,7 +49,7 @@ def run_fixture(historical, deep, gap=False):
     with httpx.Client(transport=httpx.MockTransport(handler)) as client, patch.object(
             RateAwareClient, '__init__', init):
         result = run_research('Explain reliability complaints', REPO, START, END,
-            historical=historical, investigate=deep, evaluate=evaluate, classify=classify, client=client)
+            historical=historical, investigate=deep, evaluate=evaluate, classify=classify, client=client, narrate=None)
     return result, requests, models, evaluations, ceilings
 
 

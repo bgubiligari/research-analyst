@@ -17,7 +17,8 @@ Build a **local, synchronous Streamlit + Python research prototype** using **uv*
 - TB2 monthly complaint-theme trends: Not approved.
 - TB3-A: Implemented; verification and checkpoint approved; see `docs/TB3A_HANDOFF.md`.
 - TB3-B: Implemented; verification approved and checkpoint authorized. See `docs/TB3B_HANDOFF.md`.
-- TB4 and later: Not approved.
+- TB4-A: Implemented, final correctness fixes and verification approved; checkpoint authorized. See `docs/TB4A_HANDOFF.md`. Prototype frozen for team demonstration.
+- TB4-B persistence and later work: Not approved.
 
 ### Development Workflow
 

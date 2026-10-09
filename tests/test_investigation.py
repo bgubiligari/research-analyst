@@ -56,7 +56,7 @@ def fixture(*, evaluate=None, targeted=None, failure=False, clock=None, classify
         result = run_research('Explain reliability complaints', REPO, START, END,
             historical=True, investigate=evaluate is not None, evaluate=evaluate,
             classify=classify, client=client,
-            **({'monotonic': clock} if clock else {}))
+            **({'monotonic': clock} if clock else {}), narrate=None)
     return result, requests, batches
 
 
@@ -282,7 +282,7 @@ def test_recent_path_retains_small_baseline():
     with httpx.Client(transport=httpx.MockTransport(handler)) as client:
         result = run_research('reliability', REPO, START, END, client=client, classify=classify,
             investigate=True, evaluate=lambda *args: {
-                'investigate': False, 'theme': None, 'reason': 'sufficient_evidence', 'source_ids': []})
+                'investigate': False, 'theme': None, 'reason': 'sufficient_evidence', 'source_ids': []}, narrate=None)
     assert len(requests) == len(batches) == 1
     assert len(result.batch.items) == 10 and result.monthly.empty
     assert result.investigation.model_calls == 2

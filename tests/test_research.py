@@ -56,7 +56,7 @@ def test_synthetic_end_to_end_same_pipeline():
               label(4), label(5, "mixed"), label(6, "unclear"),
               label(7, relevance="irrelevant")]
     result = run_research("Synthetic question", REPO, START, END,
-        fetch=fetcher(records, total=100, incomplete=True), classify=lambda q, items: labels)
+        fetch=fetcher(records, total=100, incomplete=True), classify=lambda q, items: labels, narrate=None)
     assert result.counts == {"collected": 8, "classified": 7, "unclassified": 1,
         "relevant": 6, "excluded": 1, "uncertain": 0, "unclear": 1}
     negative = result.sentiment.set_index("sentiment").loc["negative"]
@@ -73,11 +73,11 @@ def test_synthetic_end_to_end_same_pipeline():
 
 def test_invalid_ids_duplicates_and_enums():
     result = run_research("q", REPO, START, END, fetch=fetcher([record(1), record(2)]),
-        classify=lambda q, items: [label(1), label(1), label(999)])
+        classify=lambda q, items: [label(1), label(1), label(999)], narrate=None)
     assert result.counts["unclassified"] == 2
     result = run_research("q", REPO, START, END, fetch=fetcher([record(1)]),
         classify=lambda q, items: [{"source_id": "x", "relevance": "invented",
-                                      "sentiment": "neutral", "complaint_themes": []}])
+                                      "sentiment": "neutral", "complaint_themes": []}], narrate=None)
     assert result.counts["classified"] == 0
     assert evidence_table(result).Sentiment.tolist() == ["unclassified"]
     assert evidence_table(result)["Complaint Themes"].tolist() == ["unclassified"]
@@ -86,7 +86,7 @@ def test_invalid_ids_duplicates_and_enums():
 def test_empty_skips_model():
     def forbidden(*args):
         pytest.fail("Model called on empty input")
-    result = run_research("q", REPO, START, END, fetch=fetcher([]), classify=forbidden)
+    result = run_research("q", REPO, START, END, fetch=fetcher([]), classify=forbidden, narrate=None)
     assert result.sentiment["count"].sum() == 0
     assert result.sentiment["percent"].isna().all()
     assert result.complaints["count"].sum() == 0
@@ -100,7 +100,7 @@ def test_complaint_prevalence_counts_issues_not_labels():
     labels[1].complaint_themes = []
     labels[2].complaint_themes = ["documentation"]
     result = run_research("Narrow synthetic topic", REPO, START, END,
-        fetch=fetcher([record(i) for i in range(1, 7)]), classify=lambda q, items: labels)
+        fetch=fetcher([record(i) for i in range(1, 7)]), classify=lambda q, items: labels, narrate=None)
     themes = result.complaints.set_index("theme")
     assert themes.loc["debugging", "count"] == 1
     assert themes.loc["documentation", "count"] == 2
@@ -120,13 +120,13 @@ def test_citation_date_dedup_and_cap():
 @pytest.mark.parametrize("status", [403, 429, 500, 422])
 def test_source_errors(status):
     with pytest.raises(ResearchError):
-        run_research("q", REPO, START, END, fetch=fetcher([], status=status))
+        run_research("q", REPO, START, END, fetch=fetcher([], status=status), narrate=None)
 
 
 def test_model_failure_keeps_real_evidence():
     def failure(*args):
         raise ResearchError("Model unavailable")
-    result = run_research("q", REPO, START, END, fetch=fetcher([record(1)]), classify=failure)
+    result = run_research("q", REPO, START, END, fetch=fetcher([record(1)]), classify=failure, narrate=None)
     assert result.counts["unclassified"] == 1
     assert "Model unavailable" in result.warnings
 
@@ -153,7 +153,7 @@ def test_classifier_sdk_boundary(monkeypatch):
 
 def test_streamlit_synthetic_result():
     result = run_research("q", REPO, START, END, fetch=fetcher([record(1)]),
-                          classify=lambda q, items: [label(1)])
+                          classify=lambda q, items: [label(1)], narrate=None)
     with patch("research.run_research", return_value=result) as pipeline:
         app = AppTest.from_file("../app.py", default_timeout=15).run()
         app.button[0].click().run()
@@ -179,7 +179,7 @@ def quality_fixture():
     labels[3].complaint_themes = ["performance", "usability"]
     return run_research("Synthetic question", REPO, START, END,
         fetch=fetcher([record(i, body=text) for i, text in enumerate(texts, 1)], total=20),
-        classify=lambda q, items: list(reversed(labels)))
+        classify=lambda q, items: list(reversed(labels)), narrate=None)
 
 
 def test_evidence_mapping_filtering_and_missing_labels():
@@ -218,7 +218,7 @@ def test_deterministic_findings_and_descending_themes():
 def test_empty_and_unclassified_findings():
     for records in ([], [record(1)]):
         result = run_research("q", REPO, START, END,
-            fetch=fetcher(records), classify=lambda q, items: [])
+            fetch=fetcher(records), classify=lambda q, items: [], narrate=None)
         findings = research_findings(result)
         assert "Insufficient classifiable relevant evidence for sentiment findings." in findings
         assert "Insufficient relevant classified evidence for complaint findings." in findings
@@ -245,7 +245,7 @@ def test_filters_do_not_rerun_pipeline():
 @pytest.mark.parametrize("single_issue", [False, True])
 def test_complaint_chart_preserves_pandas_values_and_full_percentage_axis(single_issue):
     result = (run_research("q", REPO, START, END, fetch=fetcher([record(1)]),
-                          classify=lambda q, items: [label(1)])
+                          classify=lambda q, items: [label(1)], narrate=None)
               if single_issue else quality_fixture())
     with patch("research.run_research", return_value=result), patch("streamlit.vega_lite_chart") as chart:
         app = AppTest.from_file("../app.py", default_timeout=15).run()
@@ -273,7 +273,7 @@ def test_relevance_filter_only_changes_evidence(selection, expected):
     labels = [label(1, 'negative'), label(2, 'negative', 'irrelevant'),
               label(3, 'negative', 'uncertain'), label(5, 'neutral')]
     result = run_research('Synthetic question', REPO, START, END,
-        fetch=fetcher([record(i) for i in range(1, 6)]), classify=lambda *args: labels)
+        fetch=fetcher([record(i) for i in range(1, 6)]), classify=lambda *args: labels, narrate=None)
     metrics = result.sentiment.copy(), result.complaints.copy(), dict(result.counts), list(result.labels)
     table = evidence_table(result, relevance=selection)
     assert table.Issue.tolist() == [f'https://github.com/{REPO}/issues/{n}' for n in expected]

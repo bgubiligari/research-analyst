@@ -1,4 +1,4 @@
-# Community Research Analyst — TB1, TB2 and TB3
+# Community Research Analyst — TB1 through TB4-A
 
 Local synchronous Streamlit research using public GitHub Issues, typed OpenAI
 classification, and deterministic Pandas sentiment counts and historical trends.
@@ -126,3 +126,39 @@ Evidence Explorer defaults to **Relevant** issues. Its relevance selector offers
 Relevant, All, Irrelevant and Uncertain; All also includes unclassified issues.
 Relevance, sentiment and complaint-theme filters intersect in memory and affect
 only the evidence table. They never alter classifications, findings or charts.
+
+## TB4-A — Evidence-backed narrative (completed and approved)
+
+Research now permits one additional structured narrative call after the existing
+pipeline. Python selects at most six relevant baseline excerpts and two confirmed
+targeted supporting excerpts, assigns stable evidence IDs and resolves original
+URLs. Each claim is validated independently; unknown references, unsupported
+metrics and model-authored quantities are omitted. Python renders canonical
+Pandas counts/denominators/percentages and historical comparisons. Two consecutive
+months with N >= 5 permit descriptive comparisons; three or more permit cautious
+sampled patterns. Suppressed months remain gaps. Narrative failure preserves
+deterministic findings and charts with a visible unavailable message.
+
+Current total model-call caps, including narrative: Recent Quick 2, Recent Deep 4,
+Historical Quick 6, Historical Deep 8. Retrieval/classification/investigation
+limits above remain unchanged. One narrative attempt uses at most 2,000 output
+tokens, a bounded input manifest and the existing overall deadline. Aggregate
+API token usage is displayed when available. Earlier TB3 call counts above describe
+the workflow before adding narrative. Controls and filters never regenerate it.
+
+Narrative validation checks references and arithmetic, not semantic entailment.
+Review cited originals manually; excerpts, classifications and narratives can be
+wrong or omit context. Raw evidence and narratives stay in session memory.
+No report persistence or TB4-B functionality is implemented.
+
+Aggregate statements show canonical metric provenance without individual issue
+citations. Qualitative observations retain Python-resolved issue links; combined
+findings keep statistical and issue support separate. Source-type metadata and
+the narrative instructions distinguish reported bugs from feature requests.
+Rejected claims can be inspected in a collapsed developer expander with bounded,
+session-only diagnostics; no rejected text, excerpts or raw responses are saved
+or logged. Filtering remains conservative and semantic support needs manual review.
+
+The prototype is frozen for the team demonstration. See
+[`docs/TB4A_HANDOFF.md`](docs/TB4A_HANDOFF.md) for verified budgets, live usage,
+tests and remaining limitations. TB4-B requires separate approval.

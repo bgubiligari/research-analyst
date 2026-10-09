@@ -99,7 +99,7 @@ def test_synthetic_historical_production_pipeline():
     with fixture_client(handler) as client:
         result = run_research("Synthetic question", REPO, START, END, historical=True,
             historical_fetch=lambda r, s, e, **kw: collect_historical(r, s, e, client=client, **kw),
-            classify=classify)
+            classify=classify, narrate=None)
     assert len(calls) == 12
     assert len(model_calls) <= 5 and all(len(g) <= 10 for g in model_calls)
     assert len(result.batch.items) <= 50
@@ -142,7 +142,7 @@ def test_full_budget_and_failed_batch():
         raise ResearchError("Synthetic model failure")
     with fixture_client(handler) as client:
         result = run_research("q", REPO, START, END, historical=True, classify=classify,
-            historical_fetch=lambda r, s, e, **kw: collect_historical(r, s, e, client=client, **kw))
+            historical_fetch=lambda r, s, e, **kw: collect_historical(r, s, e, client=client, **kw), narrate=None)
     assert len(result.batch.items) == 50
     assert len(groups) == 5 and all(len(g) == 10 for g in groups)
     assert result.counts["unclassified"] == 50
@@ -213,7 +213,7 @@ def test_monthly_exclusions_and_batch_identity():
                 Label(source_id="github:unknown:999", relevance="relevant", sentiment="positive", complaint_themes=[])]
     with fixture_client(handler) as client:
         result = run_research("q", REPO, START, START, historical=True, classify=classifier,
-            historical_fetch=lambda r, s, e, **kw: collect_historical(r, s, e, client=client, **kw))
+            historical_fetch=lambda r, s, e, **kw: collect_historical(r, s, e, client=client, **kw), narrate=None)
     row = result.monthly.iloc[0]
     assert (row.irrelevant, row.uncertain, row.unclear, row.unclassified) == (1, 1, 1, 2)
     assert row.denominator == 0 and pd.isna(row.negative_percent)

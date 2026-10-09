@@ -1,4 +1,5 @@
 """Local TB1/TB2/TB3-A dashboard; no persistent source cache or report files."""
+import json
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -18,7 +19,7 @@ from research import (
 
 load_dotenv()
 st.set_page_config(page_title="Community Research Analyst", layout="wide")
-st.title("Community Research Analyst — TB3-B")
+st.title("Community Research Analyst — TB4-A")
 st.caption("Local research with in-memory results. Choose sampling and research depth, then click Research.")
 historical = st.radio("Sampling", ["Historical (TB2)", "Recent (TB1)"], horizontal=True) == "Historical (TB2)"
 depth = st.radio("Research depth", ["Quick", "Deep"], horizontal=True)
@@ -26,7 +27,7 @@ investigate = depth == "Deep"
 st.caption("Quick: baseline-only research. Deep: baseline research with optional additional investigation.")
 st.caption(f"Selected budgets: {50 if historical else 10} baseline issues; {10 if investigate else 0} additional candidates; "
            f"{(12 if historical else 1) + int(investigate)} GitHub calls; "
-           f"{(5 if historical else 1) + 2 * int(investigate)} model calls maximum.")
+           f"{(5 if historical else 1) + 2 * int(investigate) + 1} model calls maximum (including narrative).")
 st.info(
     ("Retrieval scope: up to 50 public issues across calendar months. " if historical else
      "Retrieval scope: a small repository-level sample of the newest 10 public issues ") +
@@ -144,6 +145,56 @@ if "active_result" in st.session_state:
         })
         with st.expander("Search interval coverage and errors"):
             st.dataframe(result.intervals, hide_index=True)
+    narrative = getattr(result, "narrative", None)
+    if narrative and narrative.status == "available":
+        st.subheader("Research Summary")
+        st.caption("Evidence-backed interpretation of sampled GitHub issues. Citation validity does not guarantee semantic support.")
+        for section, heading in [("summary", None), ("key_finding", "Key Findings"),
+                                 ("complaint", "Developer Complaints"),
+                                 ("historical", "Historical Interpretation")]:
+            claims = [claim for claim in narrative.claims if claim["section"] == section]
+            if section == "summary" and not claims:
+                # Reuse accepted model statements verbatim; never invent a replacement explanation.
+                claims = [claim for claim in narrative.claims if claim["section"] == "key_finding"][:2]
+                if claims:
+                    st.caption("Summary reuses the validated findings below; a separate summary claim was omitted.")
+            if heading and (claims or section == "complaint"):
+                st.subheader(heading)
+            if not claims and section in ("summary", "complaint"):
+                st.caption("No independently validated explanation was returned for this section.")
+            for claim in claims:
+                if claim["text"]:
+                    st.text(claim["text"])
+                for metric in claim["metrics"]:
+                    st.write(metric)
+                if claim.get("metric_keys"):
+                    st.caption("Metric provenance: " + ", ".join(claim["metric_keys"]))
+                citations = [] if claim["section"] == "historical" or claim.get("support_kind") == "aggregate" else claim["citations"]
+                for citation in citations:
+                    st.link_button(f"{citation['role'].title()} issue #{citation['source_id'].rsplit(':', 1)[-1]} ({citation['cohort']})",
+                                   citation["url"])
+                    if citation.get("issue_type", "unspecified") != "unspecified":
+                        st.caption("Source type: " + citation["issue_type"].replace("_", " ") +
+                                   "; supports the qualitative observation, not aggregate statistics.")
+        if not any(claim["section"] == "historical" for claim in narrative.claims) and not result.monthly.empty:
+            st.caption("Historical interpretation not provided: eligible comparisons may be insufficient or were not selected.")
+        if narrative.rejected:
+            st.caption("Some narrative claims were omitted after validation.")
+    else:
+        st.info("Narrative unavailable. " + (narrative.reason if narrative else "Run Research to generate a narrative."))
+    if narrative:
+        with st.expander("Narrative limitations and execution"):
+            for limitation in narrative.limitations:
+                st.write(limitation)
+            st.write({"total_model_calls": result.investigation.model_calls,
+                      "narrative_token_usage": narrative.usage,
+                      "model_token_usage": getattr(result, "model_usage", []),
+                      "rejected_claims": narrative.rejected})
+        if getattr(narrative, "diagnostics", []):
+            with st.expander("Developer debug: narrative rejection diagnostics"):
+                st.caption("Temporary session-only diagnostics; discarded with current research. Not saved or logged.")
+                for diagnostic in narrative.diagnostics:
+                    st.text(json.dumps(diagnostic, ensure_ascii=False, indent=2))
     st.subheader("Research Findings")
     for finding in research_findings(result):
         st.write(finding)

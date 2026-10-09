@@ -77,7 +77,7 @@ def test_policy_examples_aggregate_without_changing_denominators():
                             sentiment=sentiment, complaint_themes=themes))
     result = run_research("What complaints appear?", "synthetic/policy",
         date(2026, 9, 1), date(2026, 9, 2),
-        fetch=lambda *args: SearchBatch(issues, 8, False), classify=lambda *args: labels)
+        fetch=lambda *args: SearchBatch(issues, 8, False), classify=lambda *args: labels, narrate=None)
     sentiment = result.sentiment.set_index("sentiment")
     assert sentiment.loc["negative", "count"] == 5
     assert sentiment.loc["negative", "percent"] == 62.5
